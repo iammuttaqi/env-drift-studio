@@ -30,12 +30,15 @@ export function sanitizeToExample(
       const secretCheck = isCandidateSecret(token.key, token.value)
       const inferred = inferPrimitiveType(token.value)
 
-      if (secretCheck.isSecret || /(SECRET|PASSWORD|TOKEN|PRIVATE_KEY|API_KEY|AUTH)/i.test(token.key)) {
+      if (/DATABASE_URL/i.test(token.key)) {
         wasScrubbed = true
-        if (/STRIPE.*SECRET/i.test(token.key)) {
-          finalVal = 'sk_test_your_stripe_secret_key_here'
-        } else if (/STRIPE.*WEBHOOK/i.test(token.key)) {
+        finalVal = '"postgresql://user:password@localhost:5432/dbname"'
+      } else if (secretCheck.isSecret || /(SECRET|PASSWORD|TOKEN|PRIVATE_KEY|API_KEY|AUTH)/i.test(token.key)) {
+        wasScrubbed = true
+        if (/STRIPE.*WEBHOOK/i.test(token.key)) {
           finalVal = 'whsec_your_stripe_webhook_secret_here'
+        } else if (/STRIPE.*SECRET/i.test(token.key)) {
+          finalVal = 'sk_test_your_stripe_secret_key_here'
         } else if (/AWS_ACCESS_KEY/i.test(token.key)) {
           finalVal = 'AKIA_YOUR_AWS_ACCESS_KEY_ID'
         } else if (/AWS_SECRET/i.test(token.key)) {
@@ -47,9 +50,6 @@ export function sanitizeToExample(
         } else {
           finalVal = 'your_placeholder_secret_here'
         }
-      } else if (/DATABASE_URL/i.test(token.key)) {
-        wasScrubbed = true
-        finalVal = '"postgresql://user:password@localhost:5432/dbname"'
       } else if (inferred === 'url' && (token.value.includes('@') || token.value.includes(':'))) {
         // Scrub URL credentials if any
         try {
