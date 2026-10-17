@@ -1,0 +1,52 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Project {
+  id           String                @id @default(uuid())
+  name         String
+  slug         String                @unique
+  description  String?
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  environments Environment[]
+  auditReports AuditReport[]
+
+  @@map("projects")
+}
+
+model Environment {
+  id             String   @id @default(uuid())
+  projectId      String   @map("project_id")
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  stage          String   // "development" | "staging" | "production" | "example"
+  fileName       String?  @map("file_name") // e.g., ".env.local", ".env.production"
+  rawContent     String   @map("raw_content") // Unparsed .env source text
+  parsedJson     String   @map("parsed_json") // Serialized AST token array & key map
+  hash           String   // SHA-256 checksum of rawContent for change detection
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@unique([projectId, stage])
+  @@index([projectId])
+  @@map("environments")
+}
+
+model AuditReport {
+  id             String   @id @default(uuid())
+  projectId      String   @map("project_id")
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  healthScore    Int      @map("health_score") // 0 to 100 integer parity metric
+  driftCount     Int      @map("drift_count")  // Total missing/diverged keys
+  leakCount      Int      @map("leak_count")   // Total exposed secrets in public stages
+  matrixJson     String   @map("matrix_json")  // Serialized cross-stage matrix snapshot
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([projectId])
+  @@map("audit_reports")
+}
