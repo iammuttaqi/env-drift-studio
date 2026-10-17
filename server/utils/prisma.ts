@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import fs from 'node:fs'
 import path from 'node:path'
+import { STARTER_DB_BASE64 } from './starter-db-embedded'
 
 let prismaInstance: PrismaClient | null = null
 
@@ -39,9 +40,10 @@ export function getPrisma(): PrismaClient {
 
       if (!seeded) {
         try {
-          fs.writeFileSync(tmpDbPath, '')
+          fs.writeFileSync(tmpDbPath, Buffer.from(STARTER_DB_BASE64, 'base64'))
+          seeded = true
         } catch (e) {
-          console.warn('[getPrisma] Could not initialize empty SQLite file in /tmp:', e)
+          console.warn('[getPrisma] Could not unpack embedded starter SQLite file to /tmp:', e)
         }
       }
     }
