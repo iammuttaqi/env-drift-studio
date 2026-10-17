@@ -47,7 +47,7 @@ export function getPrisma(): PrismaClient {
     }
     process.env.DATABASE_URL = `file:${tmpDbPath}`
   } else if (!process.env.DATABASE_URL) {
-    process.env.DATABASE_URL = 'file:./prisma/dev.db'
+    process.env.DATABASE_URL = 'file:./dev.db'
   }
 
   prismaInstance = new PrismaClient({
