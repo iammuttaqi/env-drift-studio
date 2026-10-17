@@ -22,50 +22,50 @@ export default defineEventHandler(async (event): Promise<ExportCIResponse> => {
     const isoDate = new Date().toISOString()
     const healthBadge =
       healthScore >= 90
-        ? `🟢 **Healthy (${healthScore}%)**`
+        ? `**[HEALTHY] (${healthScore}%)**`
         : healthScore >= 70
-        ? `🟡 **Warning (${healthScore}%)**`
-        : `🔴 **Critical Drift (${healthScore}%)**`
+        ? `**[WARNING] (${healthScore}%)**`
+        : `**[CRITICAL DRIFT] (${healthScore}%)**`
 
     // Generate Markdown Pull Request Report
-    let markdownReport = `## 🛡️ EnvDrift Studio Configuration Audit Report
+    let markdownReport = `## EnvDrift Studio Configuration Audit Report
 
 **Project:** \`${projectName}\`  
 **Parity Score:** ${healthBadge}  
 **Audit Timestamp:** \`${isoDate}\`  
 
-### 📊 Configuration Parity Summary
+### Configuration Parity Summary
 
 | Metric | Count | Status |
 | :--- | :--- | :--- |
 | **Total Tracked Keys** | \`${metrics.totalUniqueKeys}\` | Monitored |
-| **In-Sync Keys** | \`${metrics.inSyncCount}\` | 🟢 Healthy |
-| **Missing Keys** | \`${metrics.missingCount}\` | ${metrics.missingCount > 0 ? '🔴 Critical Drift' : '🟢 None'} |
-| **Type Discrepancies** | \`${metrics.typeMismatchCount}\` | ${metrics.typeMismatchCount > 0 ? '🟡 Warning' : '🟢 None'} |
-| **Empty Values** | \`${metrics.emptyCount}\` | ${metrics.emptyCount > 0 ? '🟡 Warning' : '🟢 None'} |
-| **Orphaned Keys** | \`${metrics.orphanedCount}\` | ${metrics.orphanedCount > 0 ? '🟡 Warning' : '🟢 None'} |
-| **Exposed Secrets** | \`${metrics.leakCount}\` | ${metrics.leakCount > 0 ? '🚨 Immediate Action Required' : '🟢 Clean'} |
+| **In-Sync Keys** | \`${metrics.inSyncCount}\` | [HEALTHY] Synchronized |
+| **Missing Keys** | \`${metrics.missingCount}\` | ${metrics.missingCount > 0 ? '[CRITICAL] Missing Variables' : '[HEALTHY] None'} |
+| **Type Discrepancies** | \`${metrics.typeMismatchCount}\` | ${metrics.typeMismatchCount > 0 ? '[WARNING] Diverged Types' : '[HEALTHY] None'} |
+| **Empty Values** | \`${metrics.emptyCount}\` | ${metrics.emptyCount > 0 ? '[WARNING] Unpopulated Keys' : '[HEALTHY] None'} |
+| **Orphaned Keys** | \`${metrics.orphanedCount}\` | ${metrics.orphanedCount > 0 ? '[WARNING] Undocumented Keys' : '[HEALTHY] None'} |
+| **Exposed Secrets** | \`${metrics.leakCount}\` | ${metrics.leakCount > 0 ? '[CRITICAL] Immediate Action Required' : '[HEALTHY] Clean'} |
 `
 
     if (driftedKeys.length > 0) {
-      markdownReport += `\n### ⚠️ Detected Configuration Drift (${driftedKeys.length} Keys)\n\n`
+      markdownReport += `\n### Detected Configuration Drift (${driftedKeys.length} Keys)\n\n`
       markdownReport += `| Variable Key | Status | Severity | Details |\n| :--- | :--- | :--- | :--- |\n`
       for (const row of driftedKeys) {
         markdownReport += `| \`${row.key}\` | \`${row.status}\` | **${row.severity}** | ${row.driftReasons.join('; ')} |\n`
       }
     } else {
-      markdownReport += `\n> ✅ **Zero Configuration Drift Detected:** All variables are fully synchronized across active environments.\n`
+      markdownReport += `\n> **Zero Configuration Drift Detected:** All variables are fully synchronized across active environments.\n`
     }
 
     if (leaks.length > 0) {
-      markdownReport += `\n### 🚨 Security Scanner Alerts (${leaks.length} Findings)\n\n`
+      markdownReport += `\n### Security Scanner Alerts (${leaks.length} Findings)\n\n`
       markdownReport += `| Stage | Variable Key | Signature | Severity | Remediation Advice |\n| :--- | :--- | :--- | :--- | :--- |\n`
       for (const leak of leaks) {
         markdownReport += `| \`${leak.stage}\` | \`${leak.key}\` | \`${leak.matchedRule}\` | **${leak.severity}** | ${leak.remediation} |\n`
       }
     }
 
-    markdownReport += `\n---\n*Report generated autonomously by [EnvDrift Studio](https://github.com/muttaqi/env-drift-studio). Enforce zero drift before merging to main.*`
+    markdownReport += `\n---\n*Report generated autonomously by EnvDrift Studio. Enforce zero drift before merging to main.*`
 
     // Generate GitHub Actions Workflow YAML
     const githubActionYaml = `name: Environment Configuration Drift Guard
